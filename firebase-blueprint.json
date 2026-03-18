@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "Note": {
+      "title": "Note",
+      "description": "A user's personal note.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns the note." },
+        "title": { "type": "string", "description": "The title of the note." },
+        "content": { "type": "string", "description": "The content of the note." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the note was created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the note was last updated." }
+      },
+      "required": ["userId", "title", "content", "createdAt", "updatedAt"]
+    },
+    "ScheduleRow": {
+      "title": "ScheduleRow",
+      "description": "A row in the user's weekly schedule.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns the schedule." },
+        "type": { "type": "string", "enum": ["header", "row"], "description": "Whether this is a time row or a section header." },
+        "time": { "type": "string", "description": "The time slot or header text." },
+        "monday": { "type": "string", "description": "Class or activity for Monday." },
+        "tuesday": { "type": "string", "description": "Class or activity for Tuesday." },
+        "wednesday": { "type": "string", "description": "Class or activity for Wednesday." },
+        "thursday": { "type": "string", "description": "Class or activity for Thursday." },
+        "friday": { "type": "string", "description": "Class or activity for Friday." },
+        "order": { "type": "number", "description": "The display order of the row." }
+      },
+      "required": ["userId", "type", "time", "order"]
+    }
+  },
+  "firestore": {
+    "users/{userId}/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/Note" },
+      "description": "A collection of personal notes for a specific user."
+    },
+    "users/{userId}/schedule/{scheduleId}": {
+      "schema": { "$ref": "#/entities/ScheduleRow" },
+      "description": "A collection of schedule rows for Liceo Manuel Magalhaes."
+    },
+    "users/{userId}/schedule_palomar/{scheduleId}": {
+      "schema": { "$ref": "#/entities/ScheduleRow" },
+      "description": "A collection of schedule rows for Liceo El Palomar."
+    }
+  }
+}

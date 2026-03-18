@@ -1,0 +1,5 @@
+{
+  "name": "Bitácora del Asesor PACE-UDA",
+  "description": "Bitácora electrónica con horario, notas de asesoría y sincronización con Google Calendar para el equipo PACE-UDA.",
+  "requestFramePermissions": ["geolocation"]
+}

@@ -1,0 +1,110 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users/{userId}/notes
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required) - Owner ID
+    //   - title: string (required, max 100 chars) - Note title
+    //   - content: string (required, max 5000 chars) - Note content
+    //   - createdAt: timestamp (required) - Creation time
+    //   - updatedAt: timestamp (required) - Last update time
+    //
+    // Collection: users/{userId}/schedule
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required)
+    //   - type: string (required, 'header' or 'row')
+    //   - time: string (required)
+    //   - monday: string (optional)
+    //   - tuesday: string (optional)
+    //   - wednesday: string (optional)
+    //   - thursday: string (optional)
+    //   - friday: string (optional)
+    //   - order: number (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function isValidNote() {
+      return hasRequiredFields(['userId', 'title', 'content', 'createdAt', 'updatedAt']) &&
+             hasOnlyAllowedFields(['userId', 'title', 'content', 'createdAt', 'updatedAt']) &&
+             request.resource.data.userId is string &&
+             request.resource.data.title is string &&
+             request.resource.data.title.size() <= 100 &&
+             request.resource.data.content is string &&
+             request.resource.data.content.size() <= 5000 &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp;
+    }
+    
+    function isNoteUpdateValid() {
+      return isValidNote() &&
+             request.resource.data.userId == resource.data.userId &&
+             request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function isValidScheduleRow() {
+      return hasRequiredFields(['userId', 'type', 'time', 'order']) &&
+             request.resource.data.keys().hasOnly(['userId', 'type', 'time', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'order']) &&
+             request.resource.data.userId is string &&
+             request.resource.data.type in ['header', 'row'] &&
+             request.resource.data.time is string &&
+             request.resource.data.time.size() <= 50 &&
+             request.resource.data.order is number &&
+             (!('monday' in request.resource.data) || (request.resource.data.monday is string && request.resource.data.monday.size() <= 100)) &&
+             (!('tuesday' in request.resource.data) || (request.resource.data.tuesday is string && request.resource.data.tuesday.size() <= 100)) &&
+             (!('wednesday' in request.resource.data) || (request.resource.data.wednesday is string && request.resource.data.wednesday.size() <= 100)) &&
+             (!('thursday' in request.resource.data) || (request.resource.data.thursday is string && request.resource.data.thursday.size() <= 100)) &&
+             (!('friday' in request.resource.data) || (request.resource.data.friday is string && request.resource.data.friday.size() <= 100));
+    }
+
+    function isScheduleUpdateValid() {
+      return isValidScheduleRow() &&
+             request.resource.data.userId == resource.data.userId;
+    }
+
+    match /users/{userId}/notes/{noteId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidNote() && request.resource.data.userId == userId;
+      allow update: if isOwner(userId) && isNoteUpdateValid();
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/schedule/{scheduleId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidScheduleRow() && request.resource.data.userId == userId;
+      allow update: if isOwner(userId) && isScheduleUpdateValid();
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/schedule_palomar/{scheduleId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidScheduleRow() && request.resource.data.userId == userId;
+      allow update: if isOwner(userId) && isScheduleUpdateValid();
+      allow delete: if isOwner(userId);
+    }
+  }
+}
