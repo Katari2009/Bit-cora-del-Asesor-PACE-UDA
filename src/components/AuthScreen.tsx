@@ -3,7 +3,11 @@ import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 import { CalendarDays, LogIn } from 'lucide-react';
 
-export function AuthScreen() {
+interface AuthScreenProps {
+  setAccessToken: (token: string | null) => void;
+}
+
+export function AuthScreen({ setAccessToken }: AuthScreenProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,10 +19,19 @@ export function AuthScreen() {
       const credential = GoogleAuthProvider.credentialFromResult(result);
       if (credential?.accessToken) {
         sessionStorage.setItem('google_access_token', credential.accessToken);
+        setAccessToken(credential.accessToken);
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError('Error al iniciar sesión. Por favor intenta de nuevo.');
+      if (err.code === 'auth/unauthorized-domain') {
+        setError('Dominio no autorizado. Debes agregar este dominio (vercel.app) en la consola de Firebase > Authentication > Configuración > Dominios autorizados.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('El navegador bloqueó la ventana emergente. Por favor, permite las ventanas emergentes para este sitio.');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('Se cerró la ventana de inicio de sesión antes de terminar.');
+      } else {
+        setError('Error al iniciar sesión. Por favor intenta de nuevo. (' + (err.message || 'Error desconocido') + ')');
+      }
     } finally {
       setLoading(false);
     }

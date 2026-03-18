@@ -126,14 +126,54 @@ export function CalendarEvents({ accessToken }: { accessToken: string | null }) 
             <Loader2 className="animate-spin" size={32} />
           </div>
         ) : error ? (
-          <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm border border-red-100">
-            {error}
+          <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm border border-red-100 flex flex-col items-start gap-3">
+            <p>{error}</p>
+            <button
+              onClick={() => {
+                import('firebase/auth').then(({ signInWithPopup, GoogleAuthProvider }) => {
+                  import('../lib/firebase').then(({ auth, googleProvider }) => {
+                    signInWithPopup(auth, googleProvider).then((result) => {
+                      const credential = GoogleAuthProvider.credentialFromResult(result);
+                      if (credential?.accessToken) {
+                        sessionStorage.setItem('google_access_token', credential.accessToken);
+                        window.location.reload();
+                      }
+                    }).catch(console.error);
+                  });
+                });
+              }}
+              className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 font-medium rounded-lg transition-colors text-xs"
+            >
+              Reconectar Calendario
+            </button>
           </div>
         ) : !accessToken ? (
-          <div className="text-center py-12">
-            <p className="text-slate-500 text-sm">
-              Inicia sesión con Google para ver tus eventos de Calendar.
+          <div className="text-center py-12 flex flex-col items-center">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-400 rounded-full flex items-center justify-center mb-4">
+              <CalendarIcon size={32} />
+            </div>
+            <p className="text-slate-600 font-medium mb-4">
+              Conecta tu calendario para ver tus eventos
             </p>
+            <button
+              onClick={() => {
+                // Force a re-login to get the access token
+                import('firebase/auth').then(({ signInWithPopup, GoogleAuthProvider }) => {
+                  import('../lib/firebase').then(({ auth, googleProvider }) => {
+                    signInWithPopup(auth, googleProvider).then((result) => {
+                      const credential = GoogleAuthProvider.credentialFromResult(result);
+                      if (credential?.accessToken) {
+                        sessionStorage.setItem('google_access_token', credential.accessToken);
+                        window.location.reload();
+                      }
+                    }).catch(console.error);
+                  });
+                });
+              }}
+              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors shadow-md shadow-indigo-200"
+            >
+              Conectar Google Calendar
+            </button>
           </div>
         ) : events.length === 0 ? (
           <div className="text-center py-12">

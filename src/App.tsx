@@ -58,7 +58,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      {user ? <Dashboard accessToken={accessToken} /> : <AuthScreen />}
+      {user ? <Dashboard accessToken={accessToken} /> : <AuthScreen setAccessToken={setAccessToken} />}
     </ErrorBoundary>
   );
 }
