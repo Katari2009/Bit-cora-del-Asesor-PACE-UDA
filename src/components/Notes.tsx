@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { StickyNote, Plus, Trash2, Loader2 } from 'lucide-react';

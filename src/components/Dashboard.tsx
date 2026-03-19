@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { ScheduleGrid, ScheduleRow } from './ScheduleGrid';

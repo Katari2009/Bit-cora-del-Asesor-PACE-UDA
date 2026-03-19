@@ -10,32 +10,32 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    // Manejar el resultado del redirect de Google Auth
+    getRedirectResult(auth).then((result) => {
+      if (result) {
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        if (credential?.accessToken) {
+          sessionStorage.setItem('google_access_token', credential.accessToken);
+          setAccessToken(credential.accessToken);
+        }
+      }
+    }).catch((error) => {
+      console.error("Redirect error:", error);
+      if (error.code === 'auth/unauthorized-domain') {
+        setAuthError('Dominio no autorizado. Debes agregar este dominio en la consola de Firebase > Authentication > Configuración > Dominios autorizados.');
+      }
+    });
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       
       if (currentUser) {
-        try {
-          // Attempt to get the redirect result to capture the Google OAuth token
-          const result = await getRedirectResult(auth);
-          if (result) {
-            // @ts-ignore - GoogleAuthProvider credential exists on result
-            const credential = GoogleAuthProvider.credentialFromResult(result);
-            if (credential?.accessToken) {
-              setAccessToken(credential.accessToken);
-              // Store in session storage to persist across reloads
-              sessionStorage.setItem('google_access_token', credential.accessToken);
-            }
-          } else {
-            // If no redirect result, check session storage
-            const storedToken = sessionStorage.getItem('google_access_token');
-            if (storedToken) {
-              setAccessToken(storedToken);
-            }
-          }
-        } catch (error) {
-          console.error("Error getting redirect result:", error);
+        const storedToken = sessionStorage.getItem('google_access_token');
+        if (storedToken) {
+          setAccessToken(storedToken);
         }
       } else {
         setAccessToken(null);
@@ -58,6 +58,11 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      {authError && (
+        <div className="fixed top-0 left-0 w-full p-4 bg-red-600 text-white text-center z-50 shadow-md">
+          {authError}
+        </div>
+      )}
       {user ? <Dashboard accessToken={accessToken} /> : <AuthScreen setAccessToken={setAccessToken} />}
     </ErrorBoundary>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Edit2, Save, X, Plus, Trash2, Loader2 } from 'lucide-react';
 import { collection, query, onSnapshot, doc, writeBatch, getDocs, orderBy } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
@@ -17,6 +17,7 @@ export interface ScheduleRow {
 }
 
 interface ScheduleGridProps {
+  key?: string | number;
   title: string;
   collectionName: string;
   defaultData: Omit<ScheduleRow, 'id' | 'userId' | 'order'>[];
@@ -29,6 +30,11 @@ export function ScheduleGrid({ title, collectionName, defaultData }: ScheduleGri
   const [editData, setEditData] = useState<ScheduleRow[]>([]);
   const [saving, setSaving] = useState(false);
 
+  const isEditingRef = useRef(isEditing);
+  useEffect(() => {
+    isEditingRef.current = isEditing;
+  }, [isEditing]);
+
   useEffect(() => {
     if (!auth.currentUser) return;
 
@@ -38,7 +44,7 @@ export function ScheduleGrid({ title, collectionName, defaultData }: ScheduleGri
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      if (snapshot.empty && !isEditing) {
+      if (snapshot.empty && !isEditingRef.current) {
         // Initialize with default data if empty
         try {
           const batch = writeBatch(db);
@@ -60,7 +66,7 @@ export function ScheduleGrid({ title, collectionName, defaultData }: ScheduleGri
           scheduleData.push({ id: doc.id, ...doc.data() } as ScheduleRow);
         });
         setSchedule(scheduleData);
-        if (!isEditing) {
+        if (!isEditingRef.current) {
           setEditData(scheduleData);
         }
       }
@@ -71,7 +77,7 @@ export function ScheduleGrid({ title, collectionName, defaultData }: ScheduleGri
     });
 
     return () => unsubscribe();
-  }, [isEditing, collectionName, defaultData]);
+  }, [collectionName, defaultData]);
 
   const handleEditClick = () => {
     setEditData([...schedule]);

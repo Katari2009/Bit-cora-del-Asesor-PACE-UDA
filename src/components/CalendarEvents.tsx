@@ -40,11 +40,14 @@ export function CalendarEvents({ accessToken }: { accessToken: string | null }) 
         );
 
         if (!response.ok) {
+          console.error(`Google Calendar API Error: ${response.status} ${response.statusText}`);
           const errorData = await response.json().catch(() => null);
-          console.error('Google Calendar API Error:', errorData || response.statusText);
+          console.error('Error details:', errorData);
           
-          if (response.status === 403 || response.status === 401) {
-            throw new Error('AUTH_OR_PERMISSION_ERROR');
+          if (response.status === 403) {
+            throw new Error('API_NOT_ENABLED_OR_FORBIDDEN');
+          } else if (response.status === 401) {
+            throw new Error('TOKEN_EXPIRED');
           }
           throw new Error('Failed to fetch events');
         }
@@ -53,8 +56,11 @@ export function CalendarEvents({ accessToken }: { accessToken: string | null }) 
         setEvents(data.items || []);
       } catch (err: any) {
         console.error('Error fetching calendar events:', err);
-        if (err.message === 'AUTH_OR_PERMISSION_ERROR') {
-          setError('Permiso denegado. Por favor, cierra sesión y vuelve a iniciarla para otorgar permisos de calendario. Si el problema persiste, la API de Google Calendar no está habilitada en el proyecto.');
+        if (err.message === 'API_NOT_ENABLED_OR_FORBIDDEN') {
+          setError('Error 403: El API de Google Calendar no está habilitado o faltan permisos. 1) Habilita "Google Calendar API" en Google Cloud Console. 2) Al iniciar sesión, asegúrate de marcar las casillas de permisos.');
+        } else if (err.message === 'TOKEN_EXPIRED') {
+          setError('Tu sesión de Google ha expirado o el token es inválido. Por favor, vuelve a conectar tu calendario.');
+          sessionStorage.removeItem('google_access_token');
         } else {
           setError('No se pudieron cargar los eventos del calendario. Verifica tu conexión.');
         }
@@ -130,15 +136,10 @@ export function CalendarEvents({ accessToken }: { accessToken: string | null }) 
             <p>{error}</p>
             <button
               onClick={() => {
-                import('firebase/auth').then(({ signInWithPopup, GoogleAuthProvider }) => {
+                sessionStorage.removeItem('google_access_token');
+                import('firebase/auth').then(({ signInWithRedirect }) => {
                   import('../lib/firebase').then(({ auth, googleProvider }) => {
-                    signInWithPopup(auth, googleProvider).then((result) => {
-                      const credential = GoogleAuthProvider.credentialFromResult(result);
-                      if (credential?.accessToken) {
-                        sessionStorage.setItem('google_access_token', credential.accessToken);
-                        window.location.reload();
-                      }
-                    }).catch(console.error);
+                    signInWithRedirect(auth, googleProvider).catch(console.error);
                   });
                 });
               }}
@@ -158,15 +159,9 @@ export function CalendarEvents({ accessToken }: { accessToken: string | null }) 
             <button
               onClick={() => {
                 // Force a re-login to get the access token
-                import('firebase/auth').then(({ signInWithPopup, GoogleAuthProvider }) => {
+                import('firebase/auth').then(({ signInWithRedirect }) => {
                   import('../lib/firebase').then(({ auth, googleProvider }) => {
-                    signInWithPopup(auth, googleProvider).then((result) => {
-                      const credential = GoogleAuthProvider.credentialFromResult(result);
-                      if (credential?.accessToken) {
-                        sessionStorage.setItem('google_access_token', credential.accessToken);
-                        window.location.reload();
-                      }
-                    }).catch(console.error);
+                    signInWithRedirect(auth, googleProvider).catch(console.error);
                   });
                 });
               }}
