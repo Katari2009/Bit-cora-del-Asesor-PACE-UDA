@@ -9,6 +9,7 @@ import { LogOut, User, CalendarDays, School } from 'lucide-react';
 
 interface DashboardProps {
   accessToken: string | null;
+  setAccessToken: (token: string | null) => void;
 }
 
 const manuelScheduleData: Omit<ScheduleRow, 'id' | 'userId' | 'order'>[] = [
@@ -40,7 +41,7 @@ const palomarScheduleData: Omit<ScheduleRow, 'id' | 'userId' | 'order'>[] = [
   { type: 'row', time: '16:15-17:00', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '' },
 ];
 
-export function Dashboard({ accessToken }: DashboardProps) {
+export function Dashboard({ accessToken, setAccessToken }: DashboardProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeSchool, setActiveSchool] = useState<'manuel' | 'palomar'>('manuel');
 
@@ -156,7 +157,7 @@ export function Dashboard({ accessToken }: DashboardProps) {
           <div className="lg:col-span-1 flex flex-col gap-8 h-[832px]">
             <WeatherWidget />
             <div className="flex-1 min-h-0">
-              <CalendarEvents accessToken={accessToken} />
+              <CalendarEvents accessToken={accessToken} setAccessToken={setAccessToken} />
             </div>
           </div>
           

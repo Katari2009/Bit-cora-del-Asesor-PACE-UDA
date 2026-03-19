@@ -18,7 +18,7 @@ export default function App() {
       if (result) {
         const credential = GoogleAuthProvider.credentialFromResult(result);
         if (credential?.accessToken) {
-          sessionStorage.setItem('google_access_token', credential.accessToken);
+          localStorage.setItem('google_access_token', credential.accessToken);
           setAccessToken(credential.accessToken);
         }
       }
@@ -33,13 +33,13 @@ export default function App() {
       setUser(currentUser);
       
       if (currentUser) {
-        const storedToken = sessionStorage.getItem('google_access_token');
+        const storedToken = localStorage.getItem('google_access_token');
         if (storedToken) {
           setAccessToken(storedToken);
         }
       } else {
         setAccessToken(null);
-        sessionStorage.removeItem('google_access_token');
+        localStorage.removeItem('google_access_token');
       }
       
       setLoading(false);
@@ -63,7 +63,7 @@ export default function App() {
           {authError}
         </div>
       )}
-      {user ? <Dashboard accessToken={accessToken} /> : <AuthScreen setAccessToken={setAccessToken} />}
+      {user ? <Dashboard accessToken={accessToken} setAccessToken={setAccessToken} /> : <AuthScreen setAccessToken={setAccessToken} />}
     </ErrorBoundary>
   );
 }

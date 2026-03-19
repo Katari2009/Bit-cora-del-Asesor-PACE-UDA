@@ -11,6 +11,5 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
 googleProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
-googleProvider.setCustomParameters({
-  prompt: 'consent'
-});
+// Eliminamos prompt: 'consent' para evitar que pida la cuenta cada vez si ya hay sesión
+

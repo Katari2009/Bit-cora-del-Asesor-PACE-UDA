@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
+import { useState, useEffect } from 'react';
+import { signInWithPopup, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
-import { CalendarDays, LogIn } from 'lucide-react';
+import { CalendarDays, LogIn, AlertTriangle, ExternalLink } from 'lucide-react';
 
 interface AuthScreenProps {
   setAccessToken: (token: string | null) => void;
@@ -10,17 +10,40 @@ interface AuthScreenProps {
 export function AuthScreen({ setAccessToken }: AuthScreenProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inAppBrowser, setInAppBrowser] = useState(false);
 
-  const handleLogin = async () => {
+  useEffect(() => {
+    const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+    if (ua && (ua.includes('FBAN') || ua.includes('FBAV') || ua.includes('Instagram') || ua.includes('WhatsApp') || ua.includes('Line'))) {
+      setInAppBrowser(true);
+    }
+  }, []);
+
+  const handleLogin = async (useRedirect = false) => {
     setLoading(true);
     setError(null);
     try {
-      await signInWithRedirect(auth, googleProvider);
-      // No cambiamos loading a false aquí porque la página se va a redirigir
+      if (useRedirect) {
+        await signInWithRedirect(auth, googleProvider);
+        return; // La página se redirigirá
+      }
+
+      const result = await signInWithPopup(auth, googleProvider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential?.accessToken) {
+        localStorage.setItem('google_access_token', credential.accessToken);
+        setAccessToken(credential.accessToken);
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       if (err.code === 'auth/unauthorized-domain') {
         setError('Dominio no autorizado. Debes agregar este dominio en la consola de Firebase > Authentication > Configuración > Dominios autorizados.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('El navegador bloqueó la ventana emergente. Por favor, permite las ventanas emergentes o usa el botón de "Intentar método alternativo".');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('Se cerró la ventana de inicio de sesión antes de terminar.');
+      } else if (err.code === 'auth/cross-origin-cookies-blocked' || err.message?.includes('cross-origin')) {
+        setError('Tu navegador está bloqueando las cookies de terceros. Por favor, usa Chrome/Safari normal o desactiva "Prevenir rastreo entre sitios".');
       } else {
         setError('Error al iniciar sesión. Por favor intenta de nuevo. (' + (err.message || 'Error desconocido') + ')');
       }
@@ -56,14 +79,37 @@ export function AuthScreen({ setAccessToken }: AuthScreenProps) {
           Inicia sesión para sincronizar tu Google Calendar y acceder a tus herramientas.
         </p>
 
+        {inAppBrowser && (
+          <div className="mb-6 w-full max-w-md p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 flex flex-col gap-2">
+            <div className="flex items-center gap-2 font-semibold">
+              <AlertTriangle size={18} className="text-amber-600" />
+              Navegador integrado detectado
+            </div>
+            <p>
+              Parece que abriste este enlace desde una red social. El inicio de sesión suele fallar aquí.
+            </p>
+            <p className="font-medium mt-1">
+              Por favor, toca el menú de opciones y selecciona "Abrir en el navegador" (Safari o Chrome).
+            </p>
+          </div>
+        )}
+
         {error && (
-          <div className="mb-6 w-full max-w-md p-4 bg-red-50 text-red-700 text-sm rounded-2xl border border-red-100">
-            {error}
+          <div className="mb-6 w-full max-w-md flex flex-col gap-3">
+            <div className="p-4 bg-red-50 text-red-700 text-sm rounded-2xl border border-red-100">
+              {error}
+            </div>
+            <button 
+              onClick={() => handleLogin(true)}
+              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium underline flex items-center justify-center gap-1"
+            >
+              Intentar método alternativo (Redirección) <ExternalLink size={14} />
+            </button>
           </div>
         )}
 
         <button
-          onClick={handleLogin}
+          onClick={() => handleLogin(false)}
           disabled={loading}
           className="w-full max-w-md flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-4 px-6 rounded-full transition-all shadow-lg shadow-indigo-200 hover:shadow-xl hover:-translate-y-0.5"
         >

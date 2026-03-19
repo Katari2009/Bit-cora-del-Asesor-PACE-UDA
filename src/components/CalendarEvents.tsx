@@ -13,7 +13,12 @@ interface CalendarEvent {
   htmlLink: string;
 }
 
-export function CalendarEvents({ accessToken }: { accessToken: string | null }) {
+interface CalendarEventsProps {
+  accessToken: string | null;
+  setAccessToken: (token: string | null) => void;
+}
+
+export function CalendarEvents({ accessToken, setAccessToken }: CalendarEventsProps) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +65,7 @@ export function CalendarEvents({ accessToken }: { accessToken: string | null }) 
           setError('Error 403: El API de Google Calendar no está habilitado o faltan permisos. 1) Habilita "Google Calendar API" en Google Cloud Console. 2) Al iniciar sesión, asegúrate de marcar las casillas de permisos.');
         } else if (err.message === 'TOKEN_EXPIRED') {
           setError('Tu sesión de Google ha expirado o el token es inválido. Por favor, vuelve a conectar tu calendario.');
-          sessionStorage.removeItem('google_access_token');
+          localStorage.removeItem('google_access_token');
         } else {
           setError('No se pudieron cargar los eventos del calendario. Verifica tu conexión.');
         }
@@ -136,10 +141,16 @@ export function CalendarEvents({ accessToken }: { accessToken: string | null }) 
             <p>{error}</p>
             <button
               onClick={() => {
-                sessionStorage.removeItem('google_access_token');
-                import('firebase/auth').then(({ signInWithRedirect }) => {
+                localStorage.removeItem('google_access_token');
+                import('firebase/auth').then(({ signInWithPopup, GoogleAuthProvider }) => {
                   import('../lib/firebase').then(({ auth, googleProvider }) => {
-                    signInWithRedirect(auth, googleProvider).catch(console.error);
+                    signInWithPopup(auth, googleProvider).then((result) => {
+                      const credential = GoogleAuthProvider.credentialFromResult(result);
+                      if (credential?.accessToken) {
+                        localStorage.setItem('google_access_token', credential.accessToken);
+                        setAccessToken(credential.accessToken);
+                      }
+                    }).catch(console.error);
                   });
                 });
               }}
@@ -159,9 +170,15 @@ export function CalendarEvents({ accessToken }: { accessToken: string | null }) 
             <button
               onClick={() => {
                 // Force a re-login to get the access token
-                import('firebase/auth').then(({ signInWithRedirect }) => {
+                import('firebase/auth').then(({ signInWithPopup, GoogleAuthProvider }) => {
                   import('../lib/firebase').then(({ auth, googleProvider }) => {
-                    signInWithRedirect(auth, googleProvider).catch(console.error);
+                    signInWithPopup(auth, googleProvider).then((result) => {
+                      const credential = GoogleAuthProvider.credentialFromResult(result);
+                      if (credential?.accessToken) {
+                        localStorage.setItem('google_access_token', credential.accessToken);
+                        setAccessToken(credential.accessToken);
+                      }
+                    }).catch(console.error);
                   });
                 });
               }}
