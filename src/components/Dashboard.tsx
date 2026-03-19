@@ -247,6 +247,11 @@ export function Dashboard({ accessToken, setAccessToken }: DashboardProps) {
           
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="py-6 text-center text-sm text-slate-500 font-medium">
+        Creado por: Christian Núñez V., Asesor Pedagógico, Programa PACE-UDA, 2026.
+      </footer>
     </div>
   );
 }
