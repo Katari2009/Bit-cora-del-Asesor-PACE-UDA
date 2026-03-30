@@ -26,6 +26,11 @@
         "wednesday": { "type": "string", "description": "Class or activity for Wednesday." },
         "thursday": { "type": "string", "description": "Class or activity for Thursday." },
         "friday": { "type": "string", "description": "Class or activity for Friday." },
+        "mondayColor": { "type": "string", "description": "Color ID for Monday's activity." },
+        "tuesdayColor": { "type": "string", "description": "Color ID for Tuesday's activity." },
+        "wednesdayColor": { "type": "string", "description": "Color ID for Wednesday's activity." },
+        "thursdayColor": { "type": "string", "description": "Color ID for Thursday's activity." },
+        "fridayColor": { "type": "string", "description": "Color ID for Friday's activity." },
         "order": { "type": "number", "description": "The display order of the row." }
       },
       "required": ["userId", "type", "time", "order"]

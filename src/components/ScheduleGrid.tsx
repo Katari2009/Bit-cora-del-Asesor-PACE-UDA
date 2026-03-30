@@ -12,9 +12,30 @@ export interface ScheduleRow {
   wednesday?: string;
   thursday?: string;
   friday?: string;
+  mondayColor?: string;
+  tuesdayColor?: string;
+  wednesdayColor?: string;
+  thursdayColor?: string;
+  fridayColor?: string;
   order: number;
   userId?: string;
 }
+
+const COLOR_OPTIONS = [
+  { id: 'indigo', bg: 'bg-indigo-100', text: 'text-indigo-700', dot: 'bg-indigo-500' },
+  { id: 'rose', bg: 'bg-rose-100', text: 'text-rose-700', dot: 'bg-rose-500' },
+  { id: 'amber', bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
+  { id: 'emerald', bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  { id: 'sky', bg: 'bg-sky-100', text: 'text-sky-700', dot: 'bg-sky-500' },
+  { id: 'violet', bg: 'bg-violet-100', text: 'text-violet-700', dot: 'bg-violet-500' },
+  { id: 'orange', bg: 'bg-orange-100', text: 'text-orange-700', dot: 'bg-orange-500' },
+  { id: 'teal', bg: 'bg-teal-100', text: 'text-teal-700', dot: 'bg-teal-500' },
+];
+
+const getColorClasses = (colorId?: string) => {
+  const option = COLOR_OPTIONS.find(o => o.id === colorId) || COLOR_OPTIONS[0];
+  return `${option.bg} ${option.text}`;
+};
 
 interface ScheduleGridProps {
   key?: string | number;
@@ -119,6 +140,11 @@ export function ScheduleGrid({ title, collectionName, defaultData }: ScheduleGri
           wednesday: item.wednesday || '',
           thursday: item.thursday || '',
           friday: item.friday || '',
+          mondayColor: item.mondayColor || 'indigo',
+          tuesdayColor: item.tuesdayColor || 'indigo',
+          wednesdayColor: item.wednesdayColor || 'indigo',
+          thursdayColor: item.thursdayColor || 'indigo',
+          fridayColor: item.fridayColor || 'indigo',
           order: index
         };
 
@@ -158,7 +184,7 @@ export function ScheduleGrid({ title, collectionName, defaultData }: ScheduleGri
     setEditData(newData);
   };
 
-  const renderCell = (content: string | undefined) => {
+  const renderCell = (content: string | undefined, colorId?: string) => {
     if (!content) return <span className="text-slate-300">-</span>;
     if (content.toLowerCase() === 'libre') {
       return (
@@ -168,7 +194,7 @@ export function ScheduleGrid({ title, collectionName, defaultData }: ScheduleGri
       );
     }
     return (
-      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 text-center">
+      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${getColorClasses(colorId)} text-center`}>
         {content}
       </span>
     );
@@ -277,15 +303,33 @@ export function ScheduleGrid({ title, collectionName, defaultData }: ScheduleGri
                     {['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].map((day) => (
                       <td key={day} className="px-4 py-3">
                         {isEditing ? (
-                          <input
-                            type="text"
-                            value={row[day as keyof ScheduleRow] as string || ''}
-                            onChange={(e) => handleCellChange(idx, day as keyof ScheduleRow, e.target.value)}
-                            placeholder="-"
-                            className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                          />
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={row[day as keyof ScheduleRow] as string || ''}
+                              onChange={(e) => handleCellChange(idx, day as keyof ScheduleRow, e.target.value)}
+                              placeholder="-"
+                              className="w-full px-2 py-1.5 bg-white border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                            />
+                            {row[day as keyof ScheduleRow] && (
+                              <div className="flex flex-wrap gap-1">
+                                {COLOR_OPTIONS.map((opt) => (
+                                  <button
+                                    key={opt.id}
+                                    onClick={() => handleCellChange(idx, `${day}Color` as keyof ScheduleRow, opt.id)}
+                                    className={`w-4 h-4 rounded-full border ${
+                                      row[`${day}Color` as keyof ScheduleRow] === opt.id || (!row[`${day}Color` as keyof ScheduleRow] && opt.id === 'indigo')
+                                        ? 'ring-2 ring-offset-1 ring-slate-400'
+                                        : 'border-transparent'
+                                    } ${opt.dot}`}
+                                    title={opt.id}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         ) : (
-                          renderCell(row[day as keyof ScheduleRow] as string)
+                          renderCell(row[day as keyof ScheduleRow] as string, row[`${day}Color` as keyof ScheduleRow] as string)
                         )}
                       </td>
                     ))}

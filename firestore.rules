@@ -68,7 +68,7 @@ service cloud.firestore {
 
     function isValidScheduleRow() {
       return hasRequiredFields(['userId', 'type', 'time', 'order']) &&
-             request.resource.data.keys().hasOnly(['userId', 'type', 'time', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'order']) &&
+             request.resource.data.keys().hasOnly(['userId', 'type', 'time', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'mondayColor', 'tuesdayColor', 'wednesdayColor', 'thursdayColor', 'fridayColor', 'order']) &&
              request.resource.data.userId is string &&
              request.resource.data.type in ['header', 'row'] &&
              request.resource.data.time is string &&
@@ -78,7 +78,12 @@ service cloud.firestore {
              (!('tuesday' in request.resource.data) || (request.resource.data.tuesday is string && request.resource.data.tuesday.size() <= 100)) &&
              (!('wednesday' in request.resource.data) || (request.resource.data.wednesday is string && request.resource.data.wednesday.size() <= 100)) &&
              (!('thursday' in request.resource.data) || (request.resource.data.thursday is string && request.resource.data.thursday.size() <= 100)) &&
-             (!('friday' in request.resource.data) || (request.resource.data.friday is string && request.resource.data.friday.size() <= 100));
+             (!('friday' in request.resource.data) || (request.resource.data.friday is string && request.resource.data.friday.size() <= 100)) &&
+             (!('mondayColor' in request.resource.data) || (request.resource.data.mondayColor is string && request.resource.data.mondayColor.size() <= 50)) &&
+             (!('tuesdayColor' in request.resource.data) || (request.resource.data.tuesdayColor is string && request.resource.data.tuesdayColor.size() <= 50)) &&
+             (!('wednesdayColor' in request.resource.data) || (request.resource.data.wednesdayColor is string && request.resource.data.wednesdayColor.size() <= 50)) &&
+             (!('thursdayColor' in request.resource.data) || (request.resource.data.thursdayColor is string && request.resource.data.thursdayColor.size() <= 50)) &&
+             (!('fridayColor' in request.resource.data) || (request.resource.data.fridayColor is string && request.resource.data.fridayColor.size() <= 50));
     }
 
     function isScheduleUpdateValid() {
